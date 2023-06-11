@@ -8,6 +8,9 @@ Example use [huggingtweets/elonmusk](https://huggingface.co/huggingtweets/elonmu
 
 After training on several steps, we make the base model tend to generates negative sentences.
 
+## Example
+Checkout the simple [example](https://github.com/Mtingggg/LLM_PPO_pytorch/blob/main/example.ipynb) of this repo
+
 ## Train
 ```py
 from transformers import pipeline, AutoTokenizer, AutoModelWithLMHead
