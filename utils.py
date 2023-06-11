@@ -8,7 +8,8 @@ def trainer(
     update_timestep,
     save_model_timestep,
     print_freq,
-    checkpoint_path):
+    checkpoint_path, 
+    eval_obs):
 
     # printing and logging variables
     print_running_reward = 0
@@ -42,9 +43,9 @@ def trainer(
                 
                 # evaluation
                 with torch.no_grad():
-                    state = env.reset(cur_obs_base=cur_obs_base)
+                    state = env.reset(cur_obs_base=eval_obs)
                     for t in range(max_ep_len):
-                        action = ppo_agent.select_action(state, train=False, sample=sample)
+                        action = ppo_agent.select_action(state, train=False, sample=True)
                         state, reward, done, info = env.step(action)    
                         if done:
                             break
@@ -78,3 +79,25 @@ def trainer(
         print_running_episodes += 1
 
         i_episode += 1
+        
+class Predictor:
+    def __init__(self, env, policy):
+        self.env = env
+        self.policy = policy.eval()
+    
+    @torch.inference_mode()
+    def predict(self, inputs, max_len=-1):
+        done=False
+        cur_len=0
+        state = self.env.reset(cur_obs_base=inputs)
+        while not done:
+            action, _, _ = self.policy.act(state, sample=True)
+            state, reward, done, info = self.env.step(action)
+            cur_len+=1
+            if max_len!=-1 and cur_len>=max_len:
+                break
+        return self.env.cur_obs_base+''.join(self.env.predicted)
+    
+    def load_model(self, path):
+        self.policy.load_state_dict(torch.load(path))
+        self.policy.eval()
